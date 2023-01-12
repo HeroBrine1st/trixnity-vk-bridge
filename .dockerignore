@@ -1,0 +1,15 @@
+Dockerfile
+/.idea
+/.gradle
+/.kotlin
+/.dockerignore
+/gen
+/local.properties
+/run
+
+/build
+/vk-bridge/build
+/vk-bridge/vk-worker/build
+/vk-library/build
+/bridge/build
+/compat/build

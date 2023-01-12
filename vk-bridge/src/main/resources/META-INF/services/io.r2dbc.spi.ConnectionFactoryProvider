@@ -1,0 +1,2 @@
+io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider
+io.r2dbc.pool.PoolingConnectionFactoryProvider

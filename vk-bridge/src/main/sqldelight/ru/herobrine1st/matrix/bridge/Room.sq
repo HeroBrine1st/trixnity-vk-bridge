@@ -1,0 +1,29 @@
+import net.folivo.trixnity.core.model.RoomId;
+import ru.herobrine1st.matrix.bridge.vk.value.RemoteActorIdImpl;
+import ru.herobrine1st.vk.model.PeerId;
+
+CREATE TABLE Room(
+    id SERIAL PRIMARY KEY NOT NULL,
+    mxId VARCHAR(255) AS RoomId NOT NULL UNIQUE,
+    actorId INT AS RemoteActorIdImpl REFERENCES Actor(id) ON DELETE RESTRICT, -- actorId is required because PeerId is unique to user on VK
+    peerId BIGINT AS PeerId NOT NULL,
+    isDirect BOOLEAN NOT NULL,
+    UNIQUE (actorId, peerId)
+);
+
+getRemoteRoom:
+SELECT actorId, peerId FROM Room WHERE mxId = ?;
+
+getMxRoom:
+SELECT mxId FROM Room WHERE actorId = ? AND peerId = ?;
+
+create:
+INSERT INTO Room(mxId, actorId, peerId, isDirect) VALUES (
+  :mxId,
+  :actorId,
+  :remoteId,
+  :isDirect
+);
+
+isBridged:
+SELECT COUNT(*) > 0 FROM Room WHERE actorId = ? AND peerId = ?;

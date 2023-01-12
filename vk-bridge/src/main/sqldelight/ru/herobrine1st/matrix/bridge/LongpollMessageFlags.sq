@@ -1,0 +1,20 @@
+import ru.herobrine1st.vk.model.AccountId;
+import ru.herobrine1st.vk.model.ConversationMessageId;
+import ru.herobrine1st.vk.model.PeerId;
+
+CREATE TABLE LongpollMessageFlags(
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  accountId BIGINT AS AccountId NOT NULL,
+  peerId BIGINT AS PeerId NOT NULL,
+  messageId BIGINT AS ConversationMessageId NOT NULL,
+  flags BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX longpollMessageFlagsIndex ON LongpollMessageFlags(accountId, peerId, messageId);
+
+get:
+SELECT flags FROM LongpollMessageFlags WHERE accountId = ? AND messageId = ? AND peerId = ?;
+
+set:
+INSERT INTO LongpollMessageFlags(accountId, peerId, messageId, flags) VALUES (:accountId, :peerId, :messageId, :flags)
+ON CONFLICT(accountId, peerId, messageId) DO UPDATE SET flags = :flags;

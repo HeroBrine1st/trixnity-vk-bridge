@@ -1,0 +1,19 @@
+import net.folivo.trixnity.core.model.UserId;
+import ru.herobrine1st.vk.model.AccountId;
+
+-- This table is for matrix puppets
+-- All mxids here should be controllable by bridge
+CREATE TABLE Puppet (
+    id SERIAL PRIMARY KEY NOT NULL,
+    mxId VARCHAR(255) AS UserId NOT NULL UNIQUE,
+    accountId BIGINT AS AccountId NOT NULL UNIQUE
+);
+
+getRemoteUser:
+SELECT accountId FROM Puppet WHERE mxId = ?;
+
+getMxUser:
+SELECT mxId FROM Puppet WHERE accountId = ?;
+
+create:
+INSERT INTO Puppet(mxId, accountId) VALUES (?, ?);

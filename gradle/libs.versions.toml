@@ -1,0 +1,40 @@
+[versions]
+ktor = "3.0.3"
+sqldelight = "2.0.0"
+kotlin = "2.0.21"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+
+[libraries]
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-callLogging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-server-resources = { module = "io.ktor:ktor-server-resources", version.ref = "ktor" }
+
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-resources = { module = "io.ktor:ktor-client-resources", version.ref = "ktor" }
+ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+sqldelight-driver-r2dbc = { module = "app.cash.sqldelight:r2dbc-driver", version.ref = "sqldelight" }
+sqldelight-extensions-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+sqldelight-extensions-async = { module = "app.cash.sqldelight:async-extensions", version.ref = "sqldelight" }
+sqldelight-dialect-postgresql = { module = "app.cash.sqldelight:postgresql-dialect", version.ref = "sqldelight" }
+
+kotlinLogging = { module = "io.github.oshai:kotlin-logging", version = "7.0.3" }
+
+trixnity-bridge = { module = "ru.herobrine1st.matrix:bridge", version = "1.0.2-SNAPSHOT" }
+
+
+r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version = "1.0.2.RELEASE" }
+r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version = "1.0.1.RELEASE" }
+sql4j-simple = { module = "org.slf4j:slf4j-simple", version = "2.0.7" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.1" }

@@ -1,0 +1,35 @@
+import net.folivo.trixnity.core.model.UserId;
+import ru.herobrine1st.matrix.bridge.vk.value.RemoteActorIdImpl;
+import ru.herobrine1st.vk.model.AccountId;
+
+-- This table is for remote puppets
+-- All accountIds here should be controllable by bridge
+CREATE TABLE Actor (
+  id SERIAL AS RemoteActorIdImpl PRIMARY KEY NOT NULL,
+  mxId VARCHAR(255) AS UserId NOT NULL UNIQUE,
+  accountId BIGINT AS AccountId NOT NULL UNIQUE,
+  token TEXT NOT NULL
+);
+
+create:
+INSERT INTO Actor(mxId, accountId, token) VALUES (?,?, ?);
+
+getAllIds:
+SELECT Actor.id FROM Actor;
+
+get:
+SELECT Actor.id, Actor.mxId, Actor.accountId, Actor.token FROM Actor
+WHERE Actor.id = ?;
+
+getLocalUserIdForActor:
+SELECT Actor.mxId FROM Actor
+WHERE Actor.id = ?;
+
+getActorIdByLocalUserId:
+SELECT Actor.id FROM Actor
+WHERE Actor.mxId = ?;
+
+findCorrespondingPuppetForActor:
+SELECT Puppet.mxId FROM Puppet
+JOIN Actor ON Puppet.accountId = Actor.accountId
+WHERE Actor.id = ?;

@@ -1,0 +1,69 @@
+import net.folivo.trixnity.core.model.EventId;
+import ru.herobrine1st.vk.model.ConversationMessageId;
+
+CREATE TABLE Message (
+    roomId INT REFERENCES Room(id) ON DELETE RESTRICT NOT NULL,
+    conversationMessageId BIGINT AS ConversationMessageId,
+    index SMALLINT, -- one vk event can be represented as multiple mx events
+    mxId TEXT AS EventId NOT NULL UNIQUE,
+    -- if null, we have no control on author
+    -- WARNING: making it non-null and passing a real matrix user account here is dangerous
+    -- as bridge loses its ability to replicate events sent in bypass of this bridge
+    authorId INT REFERENCES Puppet(id) ON DELETE RESTRICT NULL,
+    UNIQUE (roomId, conversationMessageId, index),
+    PRIMARY KEY (roomId, conversationMessageId, index, mxId)
+);
+
+createByRemoteAuthor:
+INSERT INTO Message(roomId, conversationMessageId, index, mxId, authorId) VALUES (
+  (
+      SELECT Room.id FROM Room
+      JOIN Actor ON Actor.id = Room.actorId
+      WHERE Actor.id = :actorId AND Room.peerId = :peerId
+  ),
+  :conversationMessageId,
+  :index,
+  :mxId,
+  -- SATEFY: UNSAFE
+  -- FIXME guarantee that this select returns exactly one row
+  --       COALESCE and case-when do not work! Both branches are evaluated
+  (SELECT Puppet.id FROM Puppet WHERE Puppet.accountId = :authorId)
+)
+ON CONFLICT(roomId, conversationMessageId, index, mxId) DO NOTHING; -- idempotent
+
+-- used only in handle of local event
+createByLocalAuthor:
+INSERT INTO Message(roomId, conversationMessageId, index, mxId, authorId) VALUES (
+  (
+    SELECT Room.id FROM Room
+    JOIN Actor ON Actor.id = Room.actorId
+    WHERE Actor.id = :actorId AND Room.peerId = :peerId
+  ),
+  :conversationMessageId,
+  :index,
+  :mxId,
+  NULL
+)
+ON CONFLICT(roomId, conversationMessageId, index, mxId) DO NOTHING; -- idempotent
+
+getByMxId:
+SELECT Room.actorId, Room.peerId, Message.conversationMessageId, Message.index FROM Message
+JOIN Room ON Room.id = Message.roomId
+WHERE Message.mxId = ?;
+
+getByRemoteId:
+SELECT Message.mxId FROM Message
+JOIN Room ON Room.id = Message.roomId
+WHERE Room.actorId = ? AND Room.peerId = ? AND Message.conversationMessageId = ? AND Message.index = ?;
+
+-- the only use case is to get puppet to delete message on mx side
+-- because vk does not give info on author of the deleted message
+-- and bridge requires remote id
+-- TODO it limits general usage, as MessageRepository is written with this in mind
+-- VkWorker should get message sender via homeserver, not via database
+-- it also helps to reduce state hoarding
+getAuthorByRemoteId:
+SELECT Puppet.accountId FROM Message
+JOIN Room ON Room.id = Message.roomId
+JOIN Puppet ON Puppet.id = Message.authorId -- TODO right outer join here to differentiate between 0 results and null author (resolving todo above eliminates that, because it will be a boolean then)
+WHERE Room.actorId = ? AND Room.peerId = ? AND Message.conversationMessageId = ? AND Message.index = ?;

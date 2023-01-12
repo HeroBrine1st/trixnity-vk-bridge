@@ -1,0 +1,25 @@
+import net.folivo.trixnity.core.model.EventId;
+
+CREATE TABLE LongpollEchoSuppressor(
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  randomId SERIAL NOT NULL UNIQUE, -- not that random :D
+  eventId TEXT AS EventId NOT NULL UNIQUE,
+  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  date_checked TIMESTAMP WITH TIME ZONE NULL
+);
+
+create:
+INSERT INTO LongpollEchoSuppressor(eventId, date) VALUES (:eventId, NOW())
+ON CONFLICT(eventId) DO UPDATE SET date = NOW()
+RETURNING randomId;
+
+check:
+WITH rows AS (
+  UPDATE LongpollEchoSuppressor
+  SET date_checked = NOW()
+  WHERE randomId = :randomId AND date >= (NOW() - (INTERVAL '1 day'))
+  RETURNING id
+)
+SELECT COUNT(*) > 0 FROM rows;
+
+-- TODO background task to cleanup entries not checked in last week or so

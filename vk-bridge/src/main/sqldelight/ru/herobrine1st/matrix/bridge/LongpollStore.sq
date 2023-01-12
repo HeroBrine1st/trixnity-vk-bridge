@@ -1,0 +1,19 @@
+import ru.herobrine1st.vk.model.AccountId;
+
+CREATE TABLE LongpollStore (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  accountId BIGINT AS AccountId NOT NULL UNIQUE,
+  ts BIGINT NOT NULL,
+  key TEXT NOT NULL,
+  server TEXT NOT NULL
+);
+
+get:
+SELECT ts, key, server FROM LongpollStore WHERE accountId = ?;
+
+set:
+INSERT INTO LongpollStore(accountId, ts, key, server) VALUES (:vkId, :ts, :key, :server)
+ON CONFLICT(accountId) DO UPDATE SET ts = EXCLUDED.ts, key = EXCLUDED.key, server = EXCLUDED.server;
+
+setTs:
+UPDATE LongpollStore SET ts = :ts WHERE accountId = :accountId;

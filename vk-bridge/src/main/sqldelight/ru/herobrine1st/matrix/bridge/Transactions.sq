@@ -1,0 +1,10 @@
+CREATE TABLE transaction (
+    -- TODO set fixed size
+    transactionId TEXT NOT NULL PRIMARY KEY
+);
+
+create:
+INSERT INTO transaction(transactionId) VALUES (?);
+
+get:
+SELECT * FROM transaction WHERE transactionId=?;
