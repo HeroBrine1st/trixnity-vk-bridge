@@ -32,5 +32,11 @@ public enum class LongpollMessageAttachmentType {
     @SerialName("question")
     QUESTION, // source is unknown
 
+    @SerialName("audio_message")
+    AUDIO_MESSAGE,
+
+    @SerialName("graffiti")
+    GRAFFITI,
+
     UNKNOWN;
 }
