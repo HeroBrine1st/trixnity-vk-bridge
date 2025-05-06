@@ -36,7 +36,6 @@ import ru.herobrine1st.vk.api.LongPollMessageStore
 import ru.herobrine1st.vk.api.LongpollEvent
 import ru.herobrine1st.vk.model.*
 import ru.herobrine1st.vk.model.endpoint.Messages
-import ru.herobrine1st.vk.model.longpoll.LongpollMessageAttachmentType
 import ru.herobrine1st.vk.model.longpoll.LongpollMessageFlags
 import kotlin.time.Duration.Companion.seconds
 
@@ -328,7 +327,7 @@ class VkWorker(
                             val attachments = event.originalUpdate.extraFields.attachments
 
                             //region Handle sticker
-                            if (attachments.attachmentTypes.singleOrNull()?.type == LongpollMessageAttachmentType.STICKER) {
+                            if (attachments.attachmentTypes.singleOrNull()?.type==AttachmentType.STICKER) {
                                 val sticker =
                                     attachments.attachmentTypes.single().attachment?.let { it as? MessageAttachment.Sticker }
                                         ?: run<_, MessageAttachment.Sticker?> {

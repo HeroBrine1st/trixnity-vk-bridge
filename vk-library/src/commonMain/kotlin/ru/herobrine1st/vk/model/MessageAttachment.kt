@@ -10,12 +10,11 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
-import ru.herobrine1st.vk.model.longpoll.LongpollMessageAttachmentType
 
 
 @Serializable(with = AttachmentSerializer::class)
 public sealed interface MessageAttachment {
-    public val type: LongpollMessageAttachmentType
+    public val type: AttachmentType
 
     @Serializable
     public data class Photo(
@@ -31,7 +30,7 @@ public sealed interface MessageAttachment {
         @SerialName("sizes")
         val sizes: List<Size>
     ) : MessageAttachment {
-        override val type: LongpollMessageAttachmentType get() = TYPE
+        override val type: AttachmentType get() = TYPE
 
         @Serializable
         public data class Size(
@@ -42,7 +41,7 @@ public sealed interface MessageAttachment {
         )
 
         internal companion object {
-            val TYPE = LongpollMessageAttachmentType.PHOTO
+            val TYPE = AttachmentType.PHOTO
         }
     }
 
@@ -58,12 +57,12 @@ public sealed interface MessageAttachment {
         val durationSeconds: Int
     ) : MessageAttachment {
 
-        override val type: LongpollMessageAttachmentType get() = TYPE
+        override val type: AttachmentType get() = TYPE
 
         val link: String get() = "https://vk.com/video${ownerId.value}_${id}"
 
         internal companion object {
-            val TYPE = LongpollMessageAttachmentType.VIDEO
+            val TYPE = AttachmentType.VIDEO
         }
     }
 
@@ -79,10 +78,10 @@ public sealed interface MessageAttachment {
         val url: String
     ) : MessageAttachment {
 
-        override val type: LongpollMessageAttachmentType get() = TYPE
+        override val type: AttachmentType get() = TYPE
 
         internal companion object {
-            val TYPE = LongpollMessageAttachmentType.FILE
+            val TYPE = AttachmentType.FILE
         }
     }
 
@@ -106,10 +105,10 @@ public sealed interface MessageAttachment {
         @SerialName("is_allowed")
         val isAvailable: Boolean? = null
     ) : MessageAttachment {
-        override val type: LongpollMessageAttachmentType get() = TYPE
+        override val type: AttachmentType get() = TYPE
 
         internal companion object {
-            val TYPE = LongpollMessageAttachmentType.STICKER
+            val TYPE = AttachmentType.STICKER
         }
 
         @Serializable
@@ -127,12 +126,12 @@ public sealed interface MessageAttachment {
         @SerialName("owner_id")
         val ownerId: AccountId
     ) : MessageAttachment {
-        override val type: LongpollMessageAttachmentType get() = TYPE
+        override val type: AttachmentType get() = TYPE
 
         val link: String get() = "https://vk.com/wall${ownerId.value}_${id}"
 
         internal companion object {
-            val TYPE = LongpollMessageAttachmentType.WALL_POST
+            val TYPE = AttachmentType.WALL_POST
         }
     }
 
@@ -140,11 +139,11 @@ public sealed interface MessageAttachment {
         val actualType: String,
         val raw: JsonElement
     ) : MessageAttachment {
-        override val type: LongpollMessageAttachmentType = LongpollMessageAttachmentType.UNKNOWN
+        override val type: AttachmentType = AttachmentType.UNKNOWN
     }
 
     public data class InvalidAttachment(
-        override val type: LongpollMessageAttachmentType,
+        override val type: AttachmentType,
         val raw: JsonElement
     ) : MessageAttachment
 }
@@ -170,7 +169,7 @@ internal object AttachmentSerializer : KSerializer<MessageAttachment> {
         val attachment = jsonObject[typeString]!!
 
         val type = try {
-            decoder.json.decodeFromJsonElement<LongpollMessageAttachmentType>(jsonObject["type"]!!)
+            decoder.json.decodeFromJsonElement<AttachmentType>(jsonObject["type"]!!)
         } catch (e: IllegalArgumentException) {
             logger.error(e) { "Attachment $typeString is unknown ($attachment)" }
             return MessageAttachment.UnknownAttachment(typeString, attachment)

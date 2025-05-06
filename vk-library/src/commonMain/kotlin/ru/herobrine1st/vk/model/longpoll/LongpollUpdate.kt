@@ -402,7 +402,7 @@ internal object AttachmentsSerializer : KSerializer<Attachments> {
                 (1..MAX_ATTACHMENTS_IN_MESSAGE).forEach { i ->
                     if ("attach${i}_type" !in jsonObject) return@buildList
 
-                    val type = decoder.json.decodeFromJsonElement<LongpollMessageAttachmentType>(
+                    val type = decoder.json.decodeFromJsonElement<AttachmentType>(
                         // SAFETY: jsonObject key presence is checked above
                         jsonObject["attach${i}_type"]!!
                     )
@@ -442,7 +442,7 @@ public data class Attachments(
 )
 
 public data class LongpollAttachment(
-    val type: LongpollMessageAttachmentType,
+    val type: AttachmentType,
     val id: String = "",
     val attachment: MessageAttachment?
 )
