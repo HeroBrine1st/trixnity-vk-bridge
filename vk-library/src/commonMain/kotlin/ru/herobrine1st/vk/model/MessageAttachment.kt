@@ -165,10 +165,17 @@ internal object AttachmentSerializer : KSerializer<MessageAttachment> {
         decoder as JsonDecoder
         val jsonObject = decoder.decodeJsonElement().jsonObject
         if ("type" !in jsonObject) throw SerializationException("No type field found in attachment")
-        val type = decoder.json.decodeFromJsonElement<LongpollMessageAttachmentType>(jsonObject["type"]!!)
         val typeString = jsonObject["type"]!!.jsonPrimitive.content
         if (typeString !in jsonObject) throw SerializationException("No actual attachment found in attachment")
         val attachment = jsonObject[typeString]!!
+
+        val type = try {
+            decoder.json.decodeFromJsonElement<LongpollMessageAttachmentType>(jsonObject["type"]!!)
+        } catch (e: IllegalArgumentException) {
+            logger.error(e) { "Attachment $typeString is unknown ($attachment)" }
+            return MessageAttachment.UnknownAttachment(typeString, attachment)
+        }
+
         val deserializer = when (type) {
             MessageAttachment.Sticker.TYPE -> MessageAttachment.Sticker.serializer()
             MessageAttachment.Photo.TYPE -> MessageAttachment.Photo.serializer()
@@ -176,14 +183,14 @@ internal object AttachmentSerializer : KSerializer<MessageAttachment> {
             MessageAttachment.Video.TYPE -> MessageAttachment.Video.serializer()
             MessageAttachment.WallPost.TYPE -> MessageAttachment.WallPost.serializer()
             else -> {
-                logger.warn { "Encountered unknown attachment: type=$type, $attachment" }
+                logger.warn { "Encountered known attachment with no deserialisation logic: type=$type, $attachment" }
                 return MessageAttachment.UnknownAttachment(typeString, attachment)
             }
         }
 
         return try {
             decoder.json.decodeFromJsonElement(deserializer, attachment)
-        } catch (e: SerializationException) {
+        } catch (e: IllegalArgumentException) {
             logger.error(e) { "Couldn't deserialize attachment $attachment (type=$type)" }
             MessageAttachment.InvalidAttachment(type, attachment)
         }
