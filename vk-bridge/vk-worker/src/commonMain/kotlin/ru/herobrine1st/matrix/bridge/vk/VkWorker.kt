@@ -331,7 +331,7 @@ class VkWorker(
                                 val sticker =
                                     attachments.attachmentTypes.single().attachment?.let { it as? MessageAttachment.Sticker }
                                         ?: run<_, MessageAttachment.Sticker?> {
-                                            logger.warn { "Sticker object expected, got nothing" }
+                                            logger.warn { "Sticker object expected, got ${attachments.attachmentTypes.single().attachment}" }
                                             logger.info { "Fetching message ${event.conversationMessageId} in ${event.peerId}" }
                                             val message = vkApi.messages.getByConversationMessageId(
                                                 actor = actor,
