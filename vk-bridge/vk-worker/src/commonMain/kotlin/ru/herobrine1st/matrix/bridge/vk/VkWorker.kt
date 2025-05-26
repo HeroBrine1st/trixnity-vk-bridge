@@ -147,7 +147,8 @@ class VkWorker(
                                         actor,
                                         peerId,
                                         editedMessage.conversationMessageId,
-                                        body = text
+                                        body = text,
+                                        keepForwardMessages = true
                                     ).getOrThrow()
                                 } else {
                                     val randomId = echoSuppresor.getRandomId(event.id)
@@ -221,7 +222,8 @@ class VkWorker(
                                         actor,
                                         peerId,
                                         editedMessage.conversationMessageId,
-                                        attachments = listOf(attachmentId)
+                                        attachments = listOf(attachmentId),
+                                        keepForwardMessages = true
                                     ).getOrThrow()
                                 } else {
                                     val randomId = echoSuppresor.getRandomId(event.id)

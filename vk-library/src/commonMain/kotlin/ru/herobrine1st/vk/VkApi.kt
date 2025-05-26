@@ -100,7 +100,7 @@ public class VkApi(private val httpClient: VkApiClient) {
             conversationMessageId: ConversationMessageId,
             body: String? = null,
             attachments: List<AttachmentId> = emptyList(),
-            keepForwardMessages: Boolean = true
+            keepForwardMessages: Boolean = false
         ): Result<Unit> = httpClient.request(
             actor,
             Messages.Edit,

@@ -154,7 +154,7 @@ public class Messages private constructor() {
             @SerialName("message") val body: String? = null,
             @SerialName("attachment") val attachments: List<AttachmentId> = emptyList(),
             @Serializable(with = BooleanAsIntSerializer::class)
-            @SerialName("keep_forward_messages") val keepForwardMessages: Boolean = true
+            @SerialName("keep_forward_messages") val keepForwardMessages: Boolean = false
         )
     }
 
