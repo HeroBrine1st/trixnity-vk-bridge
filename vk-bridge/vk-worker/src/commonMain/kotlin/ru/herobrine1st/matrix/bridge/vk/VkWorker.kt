@@ -541,18 +541,7 @@ class VkWorker(
                 text += "\n\nThis message has forwarded messages"
             } else if (reply != null) {
                 // If we're in MessageEdit event, there's no way to override this reply so fetching message seems unnecessary
-                // but MessageEdit (code 5) event does not send info about replies, so we should fetch message anyway
-
-                //region Write reply fallback
-                // TODO Matrix 1.13 removed reply fallbacks
-                val userPrefix =
-                    workerApi.getPuppetId(RemoteUserIdImpl(reply.sender))?.let { "<${it.full}> " }
-                        ?: "<${reply.sender}> "
-
-                val fallback = (userPrefix + reply.text.trim()).lineSequence()
-                    .joinToString("\n", postfix = "\n\n") { "> $it" }
-                text = fallback + text
-                //endregion
+                // but MessageEdit (code 5) event does not distinguish between forwards and replies, so we should fetch message anyway
 
                 val id = RemoteMessageIdImpl(actor.id, event.peerId, reply.conversationMessageId)
                 workerApi.getMessageEventId(id)
