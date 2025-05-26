@@ -173,6 +173,14 @@ class VkWorker(
                             is RoomMessageEventContent.FileBased -> {
                                 // TODO implement captions
                                 val url = content.url
+                                val caption = if (content.fileName != null && content.fileName != content.body)
+                                    content.bodyWithoutFallback
+                                        .also {
+                                            if (it.length > 4095) {
+                                                throw UnhandledEventException("The message is too big (${it.length}/4095 symbols)")
+                                            }
+                                        }
+                                else null
                                 if (url == null) {
                                     logger.info { "$event is not processed because it does not have image url" }
                                     return
@@ -222,6 +230,7 @@ class VkWorker(
                                         actor,
                                         peerId,
                                         editedMessage.conversationMessageId,
+                                        body = caption,
                                         attachments = listOf(attachmentId),
                                         keepForwardMessages = true
                                     ).getOrThrow()
@@ -231,6 +240,7 @@ class VkWorker(
                                         vkApi.messages.send(
                                             actor,
                                             peerId,
+                                            body = caption,
                                             forward = forward,
                                             randomId = randomId,
                                             attachments = listOf(attachmentId)
