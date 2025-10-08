@@ -31,7 +31,7 @@ sqldelight-dialect-postgresql = { module = "app.cash.sqldelight:postgresql-diale
 
 kotlinLogging = { module = "io.github.oshai:kotlin-logging", version = "7.0.3" }
 
-trixnity-bridge = { module = "ru.herobrine1st.matrix:bridge", version = "1.0.3-pregen" }
+trixnity-bridge = { module = "ru.herobrine1st.matrix:bridge", version = "1.0.4-pregen" }
 
 
 r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version = "1.0.2.RELEASE" }
