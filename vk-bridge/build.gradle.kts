@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.callLogging)
 
+    implementation(libs.ktor.client.logging)
+    implementation(libs.kotlinLogging)
 
     implementation(libs.r2dbc.postgresql)
     implementation(libs.r2dbc.pool)

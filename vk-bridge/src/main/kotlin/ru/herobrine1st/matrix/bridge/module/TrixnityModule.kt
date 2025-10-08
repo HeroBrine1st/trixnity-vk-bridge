@@ -4,8 +4,10 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -56,7 +58,27 @@ fun Application.trixnityModule() {
 
     val mxClient = MatrixClientServerApiClientImpl(
         baseUrl = Url(environment.config.property("ktor.deployment.homeserverUrl").getString()),
-        eventContentSerializerMappings = mappings
+        eventContentSerializerMappings = mappings,
+        httpClientConfig = {
+            install(Logging) {
+                val loggerImpl = object : Logger {
+                    val logger = KotlinLogging.logger {}
+                    override fun log(message: String) {
+                        if (level == LogLevel.ALL)
+                            this.logger.trace { message }
+                        else
+                            this.logger.debug { message }
+                    }
+                }
+
+                sanitizeHeader { header -> header == HttpHeaders.Authorization }
+
+                logger = loggerImpl
+                level = if (loggerImpl.logger.isTraceEnabled())
+                    LogLevel.ALL
+                else LogLevel.INFO
+            }
+        },
     ).apply {
         accessToken.value = environment.config.property("ktor.deployment.asToken").getString()
     }
