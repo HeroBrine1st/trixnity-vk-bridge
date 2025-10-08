@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.transform
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
+import ru.herobrine1st.vk.annotation.DelicateVkLibraryAPI
 import ru.herobrine1st.vk.api.LongPollMessageStore
 import ru.herobrine1st.vk.api.LongpollEvent
 import ru.herobrine1st.vk.model.endpoint.Messages
@@ -67,12 +68,21 @@ public class VkLongpollClient(
         while (true) {
             when (val updates = userLongpollRequest(ts, server, key)) {
                 is LongpollResponse.Update -> {
+                    @OptIn(DelicateVkLibraryAPI::class)
                     logger.debug { "Got updates with ts=${updates.ts}" }
                     logger.trace { "Updates: $updates" }
+                    // PAST INCIDENT: Exception in the middle of update bundle processing led to partial processing with
+                    //   some events replicated and some not. New TS was not written to database as idempotency measure.
+                    //   After repair, server-supplied TS is updated to new value for the same event bundle. As this TS is used
+                    //   in transaction ID, it changed transaction ID and made a repeated event, but persisting this repeat
+                    //   fails because message ID is the same as already sent but matrix event ID is new.
+                    // Mitigation: use database-stored TS (request TS), which is guaranteed to change only after all messages
+                    //   in bundle are processed.
+                    emit(updates to ts)
+                    @OptIn(DelicateVkLibraryAPI::class)
                     ts = updates.ts
-                    emit(updates)
-                    logger.trace { "Updating latest ts to ${updates.ts}" }
-                    store.setLatestTs(updates.ts)
+                    logger.trace { "Updating latest ts to $ts" }
+                    store.setLatestTs(ts)
                 }
 
                 LongpollResponse.Failed.InvalidVersion -> error("Server returned invalid version error")
@@ -102,7 +112,7 @@ public class VkLongpollClient(
                 }
             }
         }
-    }.transform { bundle ->
+    }.transform { (bundle, requestTs) ->
         bundle.updates.forEach { update: LongpollUpdate ->
             when (update) {
                 is LongpollUpdate.FlagsUpdate -> {
@@ -130,12 +140,12 @@ public class VkLongpollClient(
                     if (DELETED_ALL in definedFlags && DELETED in definedFlags) {
                         emit(
                             LongpollEvent.MessageDelete(
-                                ts = bundle.ts,
+                                ts = requestTs,
                                 conversationMessageId = update.conversationMessageId,
                                 peerId = update.peerId,
                                 flags = LongpollMessageFlags.parse(newFlags),
-                                originalUpdate = update
-                            )
+                                originalUpdate = update,
+                            ),
                         )
                     }
                 }
@@ -154,15 +164,15 @@ public class VkLongpollClient(
                     val flags = LongpollMessageFlags.parse(update.flags)
                     emit(
                         LongpollEvent.MessageEdit(
-                            ts = bundle.ts,
+                            ts = requestTs,
                             conversationMessageId = update.conversationMessageId,
                             peerId = update.peerId,
                             flags = flags,
                             text = update.extraFields.text,
                             sender = if (LongpollMessageFlags.OUTBOX in flags) null
                             else (update.extraFields.extraValues.fromUserId ?: update.peerId.toAccountId()),
-                            originalUpdate = update
-                        )
+                            originalUpdate = update,
+                        ),
                     )
                 }
 
@@ -171,38 +181,38 @@ public class VkLongpollClient(
                     val flags = LongpollMessageFlags.parse(update.flags)
                     emit(
                         LongpollEvent.NewMessage(
-                            ts = bundle.ts,
+                            ts = requestTs,
                             conversationMessageId = update.conversationMessageId,
                             peerId = update.peerId,
                             flags = flags,
                             sender = if (LongpollMessageFlags.OUTBOX in flags) null
                             else (update.extraFields.extraValues.fromUserId ?: update.peerId.toAccountId()),
                             text = update.extraFields.text,
-                            originalUpdate = update
-                        )
+                            originalUpdate = update,
+                        ),
                     )
                 }
 
                 is LongpollUpdate.UsersTyping -> {
                     // TODO this event is dispatched every 5 seconds
                     // use channelFlow and run background job
-                    emit(LongpollEvent.UsersTyping(bundle.ts, update.peerId, update.userIds, update.totalCount, update))
+                    emit(LongpollEvent.UsersTyping(requestTs, update.peerId, update.userIds, update.totalCount, update))
                 }
 
                 is LongpollUpdate.UnknownUpdate -> logger.warn { "Ignoring $update as unknown" }
 
-                is LongpollUpdate.InvalidUpdate -> emit(LongpollEvent.InvalidUpdate(bundle.ts, update))
+                is LongpollUpdate.InvalidUpdate -> emit(LongpollEvent.InvalidUpdate(requestTs, update))
 
                 is LongpollUpdate.OutboxRead -> emit(
                     LongpollEvent.OutboxRead(
-                        bundle.ts,
+                        requestTs,
                         update.peerId,
                         update.messageId,
-                        update.count
-                    )
+                        update.count,
+                    ),
                 )
 
-                is LongpollUpdate.ReactionUpdate -> emit(LongpollEvent.ReactionUpdate(bundle.ts))
+                is LongpollUpdate.ReactionUpdate -> emit(LongpollEvent.ReactionUpdate(requestTs))
             }
         }
     }

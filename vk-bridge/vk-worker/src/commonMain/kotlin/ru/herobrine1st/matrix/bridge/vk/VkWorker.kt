@@ -872,13 +872,12 @@ class VkWorker(
     // index is a workaround: message with attachments is not 1 message on matrix side
 
     // Those two aren't read
-    private fun buildEventId(actorId: RemoteActorIdImpl, event: LongpollEvent.MessageEvent) =
-    // This should be pretty valid idempotency key, becasue [update.ts] is a unique identifier of an update
-    // and on matrix side transactionId should be unique for device-endpoint pair, so that probably eventId can be reused
-        // FIXME update.ts is not unique identifier of an update, it can change
-        RemoteEventId("${actorId.value}_${event.peerId.normalizedPeerId}_${event.conversationMessageId.value}_${event.ts}").also {
+    private fun buildEventId(actorId: RemoteActorIdImpl, event: LongpollEvent.MessageEvent): RemoteEventId {
+        // SAFETY: event.ts is stored in database, hash is composed of values making each edit different, all other values make a message ID
+        return RemoteEventId("${actorId.value}_${event.peerId.normalizedPeerId}_${event.conversationMessageId.value}_${event.ts}_${event.hash}").also {
             logger.debug { "Built event id $it for event $event}" }
         }
+    }
 
     private fun RemoteEventId.indexed(index: Int) = RemoteEventId("${value}_$index") // it is never parsed, just helper
 

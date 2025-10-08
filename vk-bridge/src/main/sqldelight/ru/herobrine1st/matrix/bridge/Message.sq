@@ -44,7 +44,7 @@ INSERT INTO Message(roomId, conversationMessageId, index, mxId, authorId) VALUES
   :mxId,
   NULL
 )
-ON CONFLICT(roomId, conversationMessageId, index, mxId) DO NOTHING; -- idempotent
+ON CONFLICT(roomId, conversationMessageId, index, mxId) DO NOTHING; -- idempotent, confirmed to uncover data corruptions
 
 getByMxId:
 SELECT Room.actorId, Room.peerId, Message.conversationMessageId, Message.index FROM Message

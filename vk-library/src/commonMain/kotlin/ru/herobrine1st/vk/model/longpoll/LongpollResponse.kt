@@ -11,6 +11,7 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import ru.herobrine1st.vk.annotation.DelicateVkLibraryAPI
 
 public const val LONGPOLL_VERSION: Int = 19
 
@@ -27,9 +28,13 @@ public const val LONGPOLL_FAILED_UPDATE_TIMESTAMP: Int = 1
 public sealed interface LongpollResponse {
     @Serializable
     public data class Update(
+        /**
+         * Delicate API: this ts does not correspond to this update
+         */
+        @property:DelicateVkLibraryAPI
         @SerialName("ts") val ts: Long,
         @SerialName("updates") val updates: List<LongpollUpdate>,
-        @SerialName("pts") val pts: Long = -1
+        @SerialName("pts") val pts: Long = -1,
     ) : LongpollResponse
 
     @Serializable(with = FailedResponseSerializer::class)
