@@ -1,29 +1,39 @@
 package ru.herobrine1st.vk
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.call.*
-import io.ktor.client.plugins.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.plugins.onUpload
+import io.ktor.client.request.request
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transform
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromJsonElement
 import ru.herobrine1st.vk.annotation.DelicateVkLibraryAPI
 import ru.herobrine1st.vk.api.LongPollMessageStore
 import ru.herobrine1st.vk.api.LongpollEvent
 import ru.herobrine1st.vk.model.endpoint.Messages
-import ru.herobrine1st.vk.model.longpoll.*
+import ru.herobrine1st.vk.model.longpoll.LONGPOLL_VERSION
+import ru.herobrine1st.vk.model.longpoll.LongpollMessageFlags
 import ru.herobrine1st.vk.model.longpoll.LongpollMessageFlags.DELETED
 import ru.herobrine1st.vk.model.longpoll.LongpollMessageFlags.DELETED_ALL
+import ru.herobrine1st.vk.model.longpoll.LongpollResponse
+import ru.herobrine1st.vk.model.longpoll.LongpollUpdate
+import ru.herobrine1st.vk.model.longpoll.MODE_ATTACHMENTS
+import ru.herobrine1st.vk.model.longpoll.MODE_EXTRA_DATA_FOR_ONLINE_EVENT
+import ru.herobrine1st.vk.model.longpoll.MODE_EXTRA_EVENTS
+import ru.herobrine1st.vk.model.longpoll.MODE_RETURN_RANDOM_ID
 import ru.herobrine1st.vk.model.toAccountId
 
 
 public class VkLongpollClient(
     private val apiClient: VkApiClient,
-    private val json: Json = Json { ignoreUnknownKeys = true }
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+        @OptIn(ExperimentalSerializationApi::class)
+        allowTrailingComma = true
+    }
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -48,11 +58,11 @@ public class VkLongpollClient(
             }
         }
 
-        val element = response.body<JsonElement>()
+        val body = response.bodyAsText()
         try {
-            return json.decodeFromJsonElement(element)
+            return json.decodeFromString(body)
         } catch (t: Throwable) {
-            logger.error(t) { "An error occurred while deserializing longpoll response: $element" }
+            logger.error(t) { "An error occurred while deserializing longpoll response: $body" }
             throw t
         }
     }
